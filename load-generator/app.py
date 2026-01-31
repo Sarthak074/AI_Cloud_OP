@@ -8,7 +8,7 @@ memory_holder=[] #global memory throughout run time
 
 @app.get("/")
 def root():
-    return {"status":"Demo app running successfully"}
+    return {"status":"Load generator running successfully"}
 
 @app.get("/cpu") #For CPU loads
 def cpu_load():
