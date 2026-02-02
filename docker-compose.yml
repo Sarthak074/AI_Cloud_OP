@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
 
-  demo-app: 
+  load-generator: 
     build: ./load-generator
     container_name: load-generator
     ports:
