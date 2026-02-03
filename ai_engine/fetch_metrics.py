@@ -1,39 +1,50 @@
 import requests
 import pandas as pd
-from datetime import datetime, timedelta
+import time
+from datetime import datetime
 
-PROMETHEUS="http://localhost:9090/api/v1/query_range"
+PROMETHEUS = "http://localhost:9090/api/v1/query_range"
 
 def fetch_cpu_usage(container="load-generator"):
-    end=datetime.now()
-    start=end-timedelta(minutes=10) #last 10 minutes
+    end = int(time.time())            # current UNIX seconds
+    start = end - 600                 # last 10 minutes
 
-    query=f'rate(container_cpu_usage_seconds_total{{container="{container}"}}[30s])'
+    query = f'rate(container_cpu_usage_seconds_total{{name="{container}"}}[30s])'
 
-    params={
+    params = {
         "query": query,
-        "start": start.timestamp(),
-        "end": end.timestamp(),
-        "step": "30"
+        "start": start,
+        "end": end,
+        "step": "30s"
     }
 
-    response=requests.get(PROMETHEUS, params=params).json()
-    result=response["data"]["result"]
+    print("Sending params:", params)
 
-    if not result:
-        print("No data found!")
+    response = requests.get(PROMETHEUS, params=params)
+    print("Raw response:", response.text)
+
+    data = response.json()
+
+    if data["status"] != "success":
+        print("Query failed:", data)
         return None
-    
-    timestamps, values=[], []
 
-    for t, v in result[0]['values']:
+    results = data["data"]["result"]
+    if not results:
+        print("⚠️ No metrics returned. Check the container name.")
+        return None
+
+    timestamps = []
+    values = []
+
+    for t, v in results[0]["values"]:
         timestamps.append(datetime.fromtimestamp(float(t)))
         values.append(float(v))
-    
+
     df = pd.DataFrame({"timestamp": timestamps, "cpu_usage": values})
     df.to_csv("cpu_metrics.csv", index=False)
 
-    print("CPU metrics saved → cpu_metrics.csv")
+    print("Saved as cpu_metrics.csv")
     return df
 
 if __name__ == "__main__":
