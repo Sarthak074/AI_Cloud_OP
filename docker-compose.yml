@@ -11,12 +11,17 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
+    privileged: true
     ports:
       - "8080:8080"
     volumes:
+      - /:/rootfs:ro
       - /var/run/docker.sock:/var/run/docker.sock
-      - /var/lib/docker/:/var/lib/docker
-  
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+
   prometheus:
     image: prom/prometheus
     container_name: prometheus
