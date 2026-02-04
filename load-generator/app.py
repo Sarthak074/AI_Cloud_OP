@@ -2,33 +2,49 @@ from fastapi import FastAPI
 import time
 import threading
 
-app=FastAPI()
+from prometheus_client import Counter, Histogram, generate_latest
+from fastapi.responses import PlainTextResponse
 
-memory_holder=[] #global memory throughout run time
+app = FastAPI()
+
+memory_holder = []  # global memory for demo
+
+# --- Prometheus Metrics ---
+CPU_COUNTER = Counter("loadgen_cpu_requests_total", "CPU load requests")
+MEMORY_COUNTER = Counter("loadgen_memory_requests_total", "Memory load requests")
+LATENCY_HIST = Histogram("loadgen_latency_seconds", "Latency for /latency endpoint")
 
 @app.get("/")
 def root():
-    return {"status":"Load generator running successfully"}
+    return {"status": "Load generator running successfully"}
 
-@app.get("/cpu") #For CPU loads
+@app.get("/cpu")
 def cpu_load():
+    CPU_COUNTER.inc()
+
     def burn_cpu():
-        end_time=time.time()+10 #current time + 10
-
-        while time.time()<end_time: #CPU stays busy till condition
+        end_time = time.time() + 10
+        while time.time() < end_time:
             pass
-    
-    thread=threading.Thread(target=burn_cpu) #running it parallel (background)
+
+    thread = threading.Thread(target=burn_cpu)
     thread.start()
-    return{"message":"CPU load started for 10 seconds"}
+    return {"message": "CPU load started for 10 seconds"}
 
-@app.get("/memory") #Memory load
+@app.get("/memory")
 def memory_load():
+    MEMORY_COUNTER.inc()
     for _ in range(10):
-        memory_holder.append("X" * 10**6) # ~1mb*10
-    return {"message":"Memory usage increased"}
+        memory_holder.append("X" * 10**6)
+    return {"message": "Memory usage increased"}
 
-@app.get("/latency") #Response
+@app.get("/latency")
 def latency():
-    time.sleep(2)
-    return {"message":"Response deplayed by 2 seconds"}
+    with LATENCY_HIST.time():  # <-- Track latency automatically
+        time.sleep(2)
+    return {"message": "Response delayed by 2 seconds"}
+
+# --- Required for Prometheus ---
+@app.get("/metrics")
+def metrics():
+    return PlainTextResponse(generate_latest(), media_type="text/plain")
