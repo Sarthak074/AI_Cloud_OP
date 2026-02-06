@@ -8,6 +8,12 @@ services:
     ports:
       - "8000:8000"
   
+  backend:
+    build: ./backend
+    container_name: backend
+    ports:
+      - "8030:8030"
+  
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
