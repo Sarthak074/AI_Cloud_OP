@@ -5,118 +5,132 @@ from sklearn.ensemble import IsolationForest
 from sklearn.metrics import mean_squared_error, accuracy_score, confusion_matrix
 import matplotlib.pyplot as plt
 
-print("\n=== LOADING METRICS ===")
+from optimizer import generate_recommendations
 
-cpu_df = pd.read_csv("cpu_metrics.csv")
-mem_df = pd.read_csv("memory_metrics.csv")
-lat_df = pd.read_csv("latency_metrics.csv")
+def run_ai_pipeline():
+    print("\n=== LOADING METRICS ===")
 
-# Merge all 3 datasets on timestamp
-df = cpu_df.merge(mem_df, on="timestamp", how="outer")
-df = df.merge(lat_df, on="timestamp", how="outer")
+    cpu_df = pd.read_csv("cpu_metrics.csv")
+    mem_df = pd.read_csv("memory_metrics.csv")
+    lat_df = pd.read_csv("latency_metrics.csv")
 
-df = df.sort_values("timestamp")
-df = df.ffill().fillna(0)   # Handle missing rows
+    # Merge all 3 datasets on timestamp
+    df = cpu_df.merge(mem_df, on="timestamp", how="outer")
+    df = df.merge(lat_df, on="timestamp", how="outer")
 
-print(df.head())
+    df = df.sort_values("timestamp")
+    df = df.ffill().fillna(0)   # Handle missing rows
 
-
-# --------------------------
-# FEATURE ENGINEERING 
-# --------------------------
-
-df["cpu_avg"]     = df["cpu_usage"].rolling(5).mean()
-df["cpu_trend"]   = df["cpu_usage"].diff()
-
-df["mem_avg"]     = df["memory_usage"].rolling(5).mean()
-df["mem_trend"]   = df["memory_usage"].diff()
-
-df["lat_avg"]     = df["latency"].rolling(5).mean()
-df["lat_trend"]   = df["latency"].diff()
-
-df = df.fillna(0)
-
-# Create failure label (just synthetic)
-df["failure"] = (df["cpu_usage"] > df["cpu_usage"].mean() * 2).astype(int)
-
-print("\n=== FINAL FEATURES ===")
-print(df.head())
+    print(df.head())
 
 
-# -----------------------------------------
-# MODEL 1 — CPU PREDICTION (Linear Regression)
-# -----------------------------------------
+    # --------------------------
+    # FEATURE ENGINEERING 
+    # --------------------------
 
-print("\n=== TRAINING CPU PREDICTOR ===")
+    df["cpu_avg"]     = df["cpu_usage"].rolling(5).mean()
+    df["cpu_trend"]   = df["cpu_usage"].diff()
 
-X_cpu = df[["cpu_trend", "mem_avg", "lat_avg"]]
-y_cpu = df["cpu_usage"]
+    df["mem_avg"]     = df["memory_usage"].rolling(5).mean()
+    df["mem_trend"]   = df["memory_usage"].diff()
 
-lr = LinearRegression()
-lr.fit(X_cpu, y_cpu)
+    df["lat_avg"]     = df["latency"].rolling(5).mean()
+    df["lat_trend"]   = df["latency"].diff()
 
-df["cpu_pred"] = lr.predict(X_cpu)
+    df = df.fillna(0)
 
-rmse = np.sqrt(mean_squared_error(df["cpu_usage"], df["cpu_pred"]))
-print("CPU Prediction RMSE:", rmse)
+    # Create failure label (just synthetic)
+    df["failure"] = (df["cpu_usage"] > df["cpu_usage"].mean() * 2).astype(int)
 
-plt.figure(figsize=(10,4))
-plt.plot(df["timestamp"], df["cpu_usage"], label="CPU Actual")
-plt.plot(df["timestamp"], df["cpu_pred"], label="CPU Predicted")
-plt.legend()
-plt.title("CPU Prediction")
-plt.xticks(rotation=45)
-plt.tight_layout()
-plt.show()
+    print("\n=== FINAL FEATURES ===")
+    print(df.head())
 
 
-# -----------------------------------------
-# MODEL 2 — ANOMALY DETECTION (Isolation Forest)
-# -----------------------------------------
+    # -----------------------------------------
+    # MODEL 1 — CPU PREDICTION (Linear Regression)
+    # -----------------------------------------
 
-print("\n=== TRAINING ANOMALY DETECTOR ===")
+    print("\n=== TRAINING CPU PREDICTOR ===")
 
-X_anom = df[["cpu_usage", "memory_usage", "latency"]]
-iso = IsolationForest(contamination=0.05)
-df["anomaly"] = iso.fit_predict(X_anom)
+    X_cpu = df[["cpu_trend", "mem_avg", "lat_avg"]]
+    y_cpu = df["cpu_usage"]
 
-plt.figure(figsize=(10,4))
-plt.plot(df["timestamp"], df["cpu_usage"], label="CPU")
-plt.scatter(df["timestamp"][df["anomaly"]==-1],
-            df["cpu_usage"][df["anomaly"]==-1],
-            label="Anomaly", marker="o", color="red")
-plt.legend()
-plt.title("CPU Anomaly Detection")
-plt.xticks(rotation=45)
-plt.tight_layout()
-plt.show()
+    lr = LinearRegression()
+    lr.fit(X_cpu, y_cpu)
+
+    df["cpu_pred"] = lr.predict(X_cpu)
+
+    rmse = np.sqrt(mean_squared_error(df["cpu_usage"], df["cpu_pred"]))
+    print("CPU Prediction RMSE:", rmse)
+
+    plt.figure(figsize=(10,4))
+    plt.plot(df["timestamp"], df["cpu_usage"], label="CPU Actual")
+    plt.plot(df["timestamp"], df["cpu_pred"], label="CPU Predicted")
+    plt.legend()
+    plt.title("CPU Prediction")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
 
 
-# -----------------------------------------
-# MODEL 3 — FAILURE PREDICTION (Logistic Regression)
-# -----------------------------------------
+    # -----------------------------------------
+    # MODEL 2 — ANOMALY DETECTION (Isolation Forest)
+    # -----------------------------------------
 
-print("\n=== TRAINING FAILURE PREDICTOR ===")
+    print("\n=== TRAINING ANOMALY DETECTOR ===")
 
-X_fail = df[["cpu_avg", "mem_avg", "lat_avg"]]
-y_fail = df["failure"]
+    X_anom = df[["cpu_usage", "memory_usage", "latency"]]
+    iso = IsolationForest(contamination=0.05)
+    df["anomaly"] = iso.fit_predict(X_anom)
 
-logr = LogisticRegression()
-logr.fit(X_fail, y_fail)
+    plt.figure(figsize=(10,4))
+    plt.plot(df["timestamp"], df["cpu_usage"], label="CPU")
+    plt.scatter(df["timestamp"][df["anomaly"]==-1],
+                df["cpu_usage"][df["anomaly"]==-1],
+                label="Anomaly", marker="o", color="red")
+    plt.legend()
+    plt.title("CPU Anomaly Detection")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
 
-df["fail_pred"] = logr.predict(X_fail)
 
-acc = accuracy_score(y_fail, df["fail_pred"])
-cm = confusion_matrix(y_fail, df["fail_pred"])
+    # -----------------------------------------
+    # MODEL 3 — FAILURE PREDICTION (Logistic Regression)
+    # -----------------------------------------
 
-print("Failure Prediction Accuracy:", acc)
-print("Confusion Matrix:\n", cm)
+    print("\n=== TRAINING FAILURE PREDICTOR ===")
 
-plt.figure(figsize=(10,4))
-plt.scatter(df["timestamp"], df["fail_pred"], label="Pred")
-plt.scatter(df["timestamp"], df["failure"], label="Actual")
-plt.legend()
-plt.title("Failure Prediction")
-plt.xticks(rotation=45)
-plt.tight_layout()
-plt.show()
+    X_fail = df[["cpu_avg", "mem_avg", "lat_avg"]]
+    y_fail = df["failure"]
+
+    logr = LogisticRegression()
+    logr.fit(X_fail, y_fail)
+
+    df["fail_pred"] = logr.predict(X_fail)
+
+    acc = accuracy_score(y_fail, df["fail_pred"])
+    cm = confusion_matrix(y_fail, df["fail_pred"])
+
+    print("Failure Prediction Accuracy:", acc)
+    print("Confusion Matrix:\n", cm)
+
+    plt.figure(figsize=(10,4))
+    plt.scatter(df["timestamp"], df["fail_pred"], label="Pred")
+    plt.scatter(df["timestamp"], df["failure"], label="Actual")
+    plt.legend()
+    plt.title("Failure Prediction")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+    print("\n=== GENERATING OPTIMIZATION RECOMMENDATIONS ===")
+    recommendations = generate_recommendations(df)
+
+    for r in recommendations:
+        print(" -", r)
+    
+    return df, recommendations
+
+if __name__=='main':
+    run_ai_pipeline()
