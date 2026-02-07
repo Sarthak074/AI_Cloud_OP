@@ -5,14 +5,14 @@ from sklearn.ensemble import IsolationForest
 from sklearn.metrics import mean_squared_error, accuracy_score, confusion_matrix
 import matplotlib.pyplot as plt
 
-from optimizer import generate_recommendations
+from ai_engine.optimizer import generate_recommendations
 
 def run_ai_pipeline():
     print("\n=== LOADING METRICS ===")
 
-    cpu_df = pd.read_csv("cpu_metrics.csv")
-    mem_df = pd.read_csv("memory_metrics.csv")
-    lat_df = pd.read_csv("latency_metrics.csv")
+    cpu_df = pd.read_csv("ai_engine/cpu_metrics.csv")
+    mem_df = pd.read_csv("ai_engine/memory_metrics.csv")
+    lat_df = pd.read_csv("ai_engine/latency_metrics.csv")
 
     # Merge all 3 datasets on timestamp
     df = cpu_df.merge(mem_df, on="timestamp", how="outer")
@@ -95,42 +95,40 @@ def run_ai_pipeline():
     plt.show()
 
 
-    # -----------------------------------------
-    # MODEL 3 — FAILURE PREDICTION (Logistic Regression)
-    # -----------------------------------------
-
+    # ----------------------------------------------------
+    # MODEL 3 — FAILURE PREDICTION (Safely)
+    # ----------------------------------------------------
     print("\n=== TRAINING FAILURE PREDICTOR ===")
 
     X_fail = df[["cpu_avg", "mem_avg", "lat_avg"]]
     y_fail = df["failure"]
 
-    logr = LogisticRegression()
-    logr.fit(X_fail, y_fail)
+    # 🚨 FIX: Avoid crash when only 1 class present
+    if y_fail.nunique() < 2:
+        print("⚠️ Not enough failure events (only one class). Skipping failure predictor.")
+        df["fail_pred"] = 0
+        logr = None
+    else:
+        logr = LogisticRegression()
+        logr.fit(X_fail, y_fail)
+        df["fail_pred"] = logr.predict(X_fail)
 
-    df["fail_pred"] = logr.predict(X_fail)
+        acc = accuracy_score(y_fail, df["fail_pred"])
+        cm = confusion_matrix(y_fail, df["fail_pred"])
 
-    acc = accuracy_score(y_fail, df["fail_pred"])
-    cm = confusion_matrix(y_fail, df["fail_pred"])
+        print("Failure Prediction Accuracy:", acc)
+        print("Confusion Matrix:\n", cm)
 
-    print("Failure Prediction Accuracy:", acc)
-    print("Confusion Matrix:\n", cm)
-
-    plt.figure(figsize=(10,4))
-    plt.scatter(df["timestamp"], df["fail_pred"], label="Pred")
-    plt.scatter(df["timestamp"], df["failure"], label="Actual")
-    plt.legend()
-    plt.title("Failure Prediction")
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.show()
-
+    # ----------------------------------------------------
+    # OPTIMIZATION RECOMMENDATIONS
+    # ----------------------------------------------------
     print("\n=== GENERATING OPTIMIZATION RECOMMENDATIONS ===")
     recommendations = generate_recommendations(df)
 
     for r in recommendations:
         print(" -", r)
-    
+
     return df, recommendations
 
-if __name__=='main':
+if __name__ == "__main__":
     run_ai_pipeline()

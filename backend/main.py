@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 import pandas as pd
-from ai_engine.optimizer import generate_recommendations
 from ai_engine.ai_engine import run_ai_pipeline   # we will create a simple function
 
 app = FastAPI()
@@ -31,22 +30,22 @@ def get_metrics():
 
 @app.get("/predict")
 def get_predictions():
-    df = run_ai_pipeline()
+    df, _ = run_ai_pipeline()
     return {
-        "latest_cpu": df["cpu_usage"].iloc[-1],
-        "predicted_cpu": df["cpu_pred"].iloc[-1],
+        "latest_cpu": float(df["cpu_usage"].iloc[-1]),
+        "predicted_cpu": float(df["cpu_pred"].iloc[-1]),
+        "anomaly": int(df["anomaly"].iloc[-1]),
     }
 
 
 @app.get("/anomalies")
 def get_anomalies():
-    df = run_ai_pipeline()
+    df, _= run_ai_pipeline()
     anomalies = df[df["anomaly"] == -1]
     return anomalies.tail(10).to_dict(orient="records")
 
 
 @app.get("/recommendations")
 def get_recommendations():
-    df = run_ai_pipeline()
-    recs = generate_recommendations(df)
+    df, recs = run_ai_pipeline()
     return {"recommendations": recs}
