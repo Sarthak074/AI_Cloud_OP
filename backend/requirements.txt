@@ -5,3 +5,5 @@ requests
 numpy
 scikit-learn
 matplotlib
+jinja2
+joblib

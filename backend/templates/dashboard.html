@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Optimo: AI Cloud Ops Dashboard</title>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css">
+</head>
+
+<body class="bg-gray-900 text-white">
+
+    <div class="container mx-auto py-6">
+
+        <h1 class="text-4xl font-bold mb-8 text-center">
+            Optimo: AI-Powered Cloud Monitoring Dashboard
+        </h1>
+
+        <!-- METRICS SECTION -->
+        <div class="grid grid-cols-2 gap-6">
+
+            <!-- CPU Chart -->
+            <div class="bg-gray-800 p-6 rounded-xl shadow-xl">
+                <h2 class="text-xl mb-4">CPU Usage (Live)</h2>
+                <canvas id="cpuChart"></canvas>
+            </div>
+
+            <!-- Memory Chart -->
+            <div class="bg-gray-800 p-6 rounded-xl shadow-xl">
+                <h2 class="text-xl mb-4">Memory Usage (Live)</h2>
+                <canvas id="memChart"></canvas>
+            </div>
+
+            <!-- Predictions -->
+            <div class="bg-gray-800 p-6 rounded-xl shadow-xl col-span-2">
+                <h2 class="text-xl mb-4">Predicted vs Actual CPU</h2>
+                <canvas id="predictionChart"></canvas>
+            </div>
+        </div>
+
+        <!-- ANOMALIES -->
+        <div class="bg-red-900 p-6 rounded-xl shadow-xl mt-10">
+            <h2 class="text-2xl mb-4">Anomaly Alerts</h2>
+            <ul id="anomalyList" class="text-lg"></ul>
+        </div>
+
+        <!-- RECOMMENDATIONS -->
+        <div class="bg-blue-900 p-6 rounded-xl shadow-xl mt-10">
+            <h2 class="text-2xl mb-4">Optimization Recommendations</h2>
+            <ul id="recommendationList" class="text-lg"></ul>
+        </div>
+
+    </div>
+
+    <script src="/static/dashboard.js"></script>
+
+</body>
+</html>
