@@ -2,59 +2,143 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Optimo: AI Cloud Ops Dashboard</title>
-
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI System Monitor Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 </head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>Optimo: AI System Monitor</h1>
+            <div class="status-badge" id="systemStatus">
+                <span class="status-dot"></span>
+                <span>System Online</span>
+            </div>
+        </header>
 
-<body class="bg-gray-900 text-white">
-
-    <div class="container mx-auto py-6">
-
-        <h1 class="text-4xl font-bold mb-8 text-center">
-            Optimo: AI-Powered Cloud Monitoring Dashboard
-        </h1>
-
-        <!-- METRICS SECTION -->
-        <div class="grid grid-cols-2 gap-6">
-
-            <!-- CPU Chart -->
-            <div class="bg-gray-800 p-6 rounded-xl shadow-xl">
-                <h2 class="text-xl mb-4">CPU Usage (Live)</h2>
-                <canvas id="cpuChart"></canvas>
+        <!-- Main Metrics Grid -->
+        <div class="metrics-grid">
+            <!-- CPU Usage Card -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <h3>CPU Usage</h3>
+                    <span class="metric-icon">💻</span>
+                </div>
+                <div class="metric-value" id="cpuValue">--</div>
+                <div class="metric-label">Current Usage</div>
+                <div class="metric-prediction">
+                    <span>Predicted:</span>
+                    <span id="cpuPrediction">--</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="cpuProgress"></div>
+                </div>
             </div>
 
-            <!-- Memory Chart -->
-            <div class="bg-gray-800 p-6 rounded-xl shadow-xl">
-                <h2 class="text-xl mb-4">Memory Usage (Live)</h2>
-                <canvas id="memChart"></canvas>
+            <!-- Memory Usage Card -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <h3>Memory Usage</h3>
+                    <span class="metric-icon">🧠</span>
+                </div>
+                <div class="metric-value" id="memoryValue">--</div>
+                <div class="metric-label">Current Usage</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="memoryProgress"></div>
+                </div>
             </div>
 
-            <!-- Predictions -->
-            <div class="bg-gray-800 p-6 rounded-xl shadow-xl col-span-2">
-                <h2 class="text-xl mb-4">Predicted vs Actual CPU</h2>
-                <canvas id="predictionChart"></canvas>
+            <!-- Latency Card -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <h3>Latency</h3>
+                    <span class="metric-icon">⚡</span>
+                </div>
+                <div class="metric-value" id="latencyValue">--</div>
+                <div class="metric-label">Response Time (ms)</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="latencyProgress"></div>
+                </div>
+            </div>
+
+            <!-- Anomaly Detection Card -->
+            <div class="metric-card anomaly-card">
+                <div class="metric-header">
+                    <h3>Anomaly Status</h3>
+                    <span class="metric-icon">🔍</span>
+                </div>
+                <div class="anomaly-status" id="anomalyStatus">
+                    <div class="status-circle"></div>
+                    <span>Normal</span>
+                </div>
+                <div class="metric-label">AI Detection Active</div>
             </div>
         </div>
 
-        <!-- ANOMALIES -->
-        <div class="bg-red-900 p-6 rounded-xl shadow-xl mt-10">
-            <h2 class="text-2xl mb-4">Anomaly Alerts</h2>
-            <ul id="anomalyList" class="text-lg"></ul>
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <!-- CPU Trend Chart -->
+            <div class="chart-card">
+                <h3>CPU Usage Trend</h3>
+                <div id="cpuChart"></div>
+            </div>
+
+            <!-- System Metrics Chart -->
+            <div class="chart-card">
+                <h3>System Metrics Overview</h3>
+                <div id="metricsChart"></div>
+            </div>
         </div>
 
-        <!-- RECOMMENDATIONS -->
-        <div class="bg-blue-900 p-6 rounded-xl shadow-xl mt-10">
-            <h2 class="text-2xl mb-4">Optimization Recommendations</h2>
-            <ul id="recommendationList" class="text-lg"></ul>
+        <!-- Anomalies Section -->
+        <div class="anomalies-section">
+            <div class="section-header">
+                <h2>Recent Anomalies</h2>
+                <button class="refresh-btn" id="refreshAnomaliesBtn">🔄 Refresh</button>
+            </div>
+            <div class="anomalies-list" id="anomaliesList">
+                <p class="loading">Loading anomalies...</p>
+            </div>
         </div>
 
+        <!-- Recommendations Section -->
+        <div class="recommendations-section">
+            <div class="section-header">
+                <h2>AI Recommendations</h2>
+                <button class="refresh-btn" id="refreshRecommendationsBtn">🔄 Refresh</button>
+            </div>
+            <div class="recommendations-list" id="recommendationsList">
+                <p class="loading">Loading recommendations...</p>
+            </div>
+        </div>
+
+        <!-- Recent Metrics Table -->
+        <div class="table-section">
+            <h2>Recent Metrics History</h2>
+            <div class="table-container">
+                <table id="metricsTable">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>CPU %</th>
+                            <th>Memory %</th>
+                            <th>Latency (ms)</th>
+                            <th>Predicted CPU</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="metricsTableBody">
+                        <tr>
+                            <td colspan="6" class="loading">Loading metrics...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <script src="/static/dashboard.js"></script>
-
+    <script src="/static/dashboard.js?v=2"></script>
 </body>
 </html>
