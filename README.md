@@ -2,7 +2,7 @@
 
 A real-time system monitoring platform with AI-driven predictions, anomaly detection, and intelligent recommendations. Built with FastAPI, Machine Learning models, and a modern responsive dashboard.
 
-## able of Contents
+## Table of Contents
 
 - [Features](#features)
 - [Tech Stack](#tech-stack)
