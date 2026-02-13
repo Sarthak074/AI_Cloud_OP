@@ -418,39 +418,6 @@ curl http://localhost:8000/reset
 curl http://localhost:8000/metrics
 ```
 
-### Testing Scenarios
-
-**Test CPU Anomaly Detection:**
-```bash
-# Generate multiple CPU spikes
-for i in {1..5}; do 
-  curl http://localhost:8000/cpu
-  sleep 2
-done
-
-# Watch the dashboard for CPU anomaly alerts
-```
-
-**Test Memory Leak Detection:**
-```bash
-# Gradually increase memory consumption
-for i in {1..10}; do 
-  curl http://localhost:8000/memory
-  sleep 5
-done
-
-# Check AI recommendations for memory optimization
-```
-
-**Test Latency Monitoring:**
-```bash
-# Create continuous latency spikes
-while true; do
-  curl http://localhost:8000/latency
-  sleep 10
-done
-```
-
 ### Prometheus Metrics Exported
 
 The load generator exposes these metrics:
