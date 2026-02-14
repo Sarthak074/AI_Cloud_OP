@@ -20,7 +20,7 @@ A real-time system monitoring platform with AI-driven predictions, anomaly detec
 
 ### 🎯 Core Functionality
 - **Real-time Monitoring**: Track CPU usage, memory consumption, and system latency
-- **AI Predictions**: LSTM-based neural network predicts future CPU usage patterns
+- **AI Predictions**: Linear Regression predicts future CPU usage patterns
 - **Anomaly Detection**: Isolation Forest algorithm identifies unusual system behavior
 - **Smart Recommendations**: AI-generated optimization suggestions based on system metrics
 - **Auto-refresh**: Dashboard updates every 5 seconds with live data
@@ -36,7 +36,6 @@ A real-time system monitoring platform with AI-driven predictions, anomaly detec
 - Modern dark theme interface
 - Responsive design (mobile & desktop)
 - Real-time progress indicators
-- Animated status badges
 - Intuitive metric cards
 
 ### 🧪 Testing & Development
@@ -51,8 +50,7 @@ A real-time system monitoring platform with AI-driven predictions, anomaly detec
 ### Backend
 - **FastAPI** - Modern Python web framework
 - **Pandas** - Data manipulation and analysis
-- **Scikit-learn** - Machine learning models (Isolation Forest, Random Forest)
-- **TensorFlow/Keras** - LSTM neural network for predictions
+- **Scikit-learn** - Machine learning models (Isolation Forest, Linear Regression, Logistic Regression)
 - **Joblib** - Model serialization
 
 ### Frontend
